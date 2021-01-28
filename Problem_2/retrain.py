@@ -84,7 +84,7 @@ def retrain(image_dir):
 
     EPOCHS = 1
     steps_per_epoch = 5000
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir='./retrain_logs', update_freq='batch')
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir='retrain_logs', update_freq='batch')
     retrain_model.fit(train_batches,
                       epochs=EPOCHS,
                       steps_per_epoch=steps_per_epoch,
@@ -102,8 +102,8 @@ def retrain(image_dir):
 
     model.compile(loss=loss, metrics=[metric])
 
-    maybe_makedirs('./trained_models')
-    model.save('./trained_models/trained.h5')
+    maybe_makedirs('trained_models')
+    model.save('trained_models/trained.h5')
 
 
 if __name__ == '__main__':

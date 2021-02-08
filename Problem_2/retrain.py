@@ -20,15 +20,15 @@ def get_bottleneck_dataset(model, img_dir, img_size):
                                                         classes=LABELS,
                                                         batch_size=1)
 
-    bottelneck_x_l = []
-    bottelneck_y_l = []
+    bottleneck_x_l = []
+    bottleneck_y_l = []
     for i in range(train_img_gen.samples):
         ######### Your code starts here #########
         # We want to create a dataset of bottleneck data.
         # You can get the next image input and one-hot encoded label via x_i, y_i = next(train_img_gen)
         # For each iteration append the bottleneck output as well as the label to the respective list
-        # bottelneck_x_l -> list of tensors with dimension [1, bottleneck_size]
-        # bottelneck_y_l -> list of tensors with dimension [1, num_labels]
+        # bottleneck_x_l -> list of tensors with dimension [1, bottleneck_size]
+        # bottleneck_y_l -> list of tensors with dimension [1, num_labels]
 
         
 
@@ -36,10 +36,10 @@ def get_bottleneck_dataset(model, img_dir, img_size):
 
         ######### Your code ends here #########
 
-    bottelneck_ds = tf.data.Dataset.from_tensor_slices((np.vstack(bottelneck_x_l),
-                                                        np.vstack(bottelneck_y_l)))
+    bottleneck_ds = tf.data.Dataset.from_tensor_slices((np.vstack(bottleneck_x_l),
+                                                        np.vstack(bottleneck_y_l)))
 
-    return bottelneck_ds, train_img_gen.samples
+    return bottleneck_ds, train_img_gen.samples
 
 
 def retrain(image_dir):

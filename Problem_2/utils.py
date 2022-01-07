@@ -1,8 +1,8 @@
 import os
-import tensorflow.compat.v2 as tf
+import tensorflow as tf
 
 IMG_SIZE = 299
-LABELS = ['cat', 'dog', 'neg']
+LABELS = ["cat", "dog", "neg"]
 
 
 def maybe_makedirs(path_to_create):
@@ -40,20 +40,6 @@ def normalize_resize_image(image, img_size):
     return resize_image(normalize_image(image), img_size)
 
 
-# def write_to_tensorboard(model, path):
-#     @tf.function
-#     def traceme(x):
-#         return model(x)
-#
-#     writer = tf.summary.create_file_writer(path)
-#     tf.summary.trace_on(graph=True, profiler=True)
-#     expected_shape = model.input.get_shape().as_list()[1:]
-#     traceme(tf.zeros([1] + expected_shape))
-#     with writer.as_default():
-#         tf.summary.trace_export(
-#             name="classifier_graph",
-#             step=0,
-#             profiler_outdir=path)
-
-
-image_generator = tf.keras.preprocessing.image.ImageDataGenerator(preprocessing_function=normalize_image)
+image_generator = tf.keras.preprocessing.image.ImageDataGenerator(
+    preprocessing_function=normalize_image
+)

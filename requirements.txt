@@ -1,6 +1,8 @@
-tensorflow==1.15
-matplotlib==3.3.3
-h5py==2.10.0
+numpy
+tqdm
+tensorflow
+matplotlib
+h5py
 Pillow
 scikit-learn
 jupyter_contrib_nbextensions

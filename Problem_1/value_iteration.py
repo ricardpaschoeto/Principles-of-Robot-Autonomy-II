@@ -21,7 +21,7 @@ def value_iteration(problem, reward, terminal_mask, gam):
         # V has shape [sdim]; sdim = n * n is the total number of grid state
         # Ts is a 4 element python list of transition matrices for 4 actions
 
-        # reward has shape [sdim, adim] - represents the reward for each state
+        # reward has shape [sdim, 4] - represents the reward for each state
         # action pair
 
         # terminal_mask has shape [sdim] and has entries 1 for terminal states
@@ -50,7 +50,7 @@ def main():
     terminal_mask = tf.convert_to_tensor(terminal_mask, dtype=tf.float32)
 
     # generate the reward vector
-    reward = np.zeros([sdim, adim])
+    reward = np.zeros([sdim, 4])
     reward[problem["pos2idx"][19, 9], :] = 1.0
     reward = tf.convert_to_tensor(reward, dtype=tf.float32)
 

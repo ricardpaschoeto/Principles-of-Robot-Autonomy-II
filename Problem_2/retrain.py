@@ -1,4 +1,4 @@
-import argparse
+import argparse, pdb
 import numpy as np, tensorflow as tf
 from utils import IMG_SIZE, image_generator, LABELS, maybe_makedirs
 
@@ -78,7 +78,6 @@ def retrain(image_dir):
     retrain_model.compile(
         optimizer=tf.keras.optimizers.SGD(lr=lr), loss=loss, metrics=[metric]
     )
-
     retrain_model.summary()
 
     EPOCHS = 1
@@ -106,7 +105,11 @@ def retrain(image_dir):
 
 
 if __name__ == "__main__":
+    writer = tf.summary.create_file_writer("retrain_logs")
+    tf.summary.trace_on()
     parser = argparse.ArgumentParser()
     parser.add_argument("--image_dir", type=str)
     FLAGS, _ = parser.parse_known_args()
     retrain(FLAGS.image_dir)
+    with writer.as_default():
+        tf.summary.trace_export("retrain", step=0)

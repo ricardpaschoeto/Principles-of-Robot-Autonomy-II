@@ -1,4 +1,5 @@
 import math, pdb, os, sys
+from tqdm import tqdm
 
 import numpy as np, tensorflow as tf, matplotlib.pyplot as plt
 

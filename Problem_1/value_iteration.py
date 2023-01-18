@@ -16,9 +16,7 @@ def value_iteration(problem, reward, terminal_mask, gam):
     
     m = problem["m"]
     n = problem["n"]
-    #aS = []
-    #actions_space(problem["idx2pos"], aS, adim, problem["m"], problem["n"])
-    #V = tf.Variable(V)
+    V = tf.Variable(V)
     # perform value iteration
     for ii in range(1000):
         ######### Your code starts here #########
@@ -36,19 +34,16 @@ def value_iteration(problem, reward, terminal_mask, gam):
 
         ######### Your code ends here ###########
         err = 0.
-        if ii % 20 == 0:
-            print(ii)
-
         for pos, s in enumerate(problem["idx2pos"]):
-            aS = actions_space(s, adim, problem["m"], problem["n"])
+            aS = actions_space(s, adim, m, n)
             best = bellman_optimality_update(problem, V, s, pos, aS, adim, gam, reward, terminal_mask)
             err = max(err, tf.linalg.norm(V[pos] - best))
-            tf.Variable(V[pos]).assign(best)
+            V[pos].assign(best)
 
-        if ii % 20 == 0:
+        if ii % 2 == 0:
             print(tf.get_static_value(err))
 
-        if tf.get_static_value(err) < 1e-7:
+        if tf.get_static_value(err) < 1e-4:
             print(ii)
             print(tf.get_static_value(err))
             break
@@ -59,21 +54,24 @@ def bellman_optimality_update(problem, V, s, s_pos, aS, adim, gamma, reward, ter
     """Mutate ``V`` according to the Bellman optimality update equation."""
     values = np.zeros((adim))
     if terminal_mask[s_pos] != 1:
-        for u in aS[s_pos]:
-            transition = problem["Ts"][u]
-            s_next = next_state(problem["m"], problem["n"], s, u)
-            idx = problem["pos2idx"][s_next[0], s_next[1]]
-            p = transition[problem["pos2idx"][s[0], s[1]], idx]            
-            values[u] += gamma * p * V[idx]
+        for u in aS:
+            for u_iter in aS:
+                if u == u_iter:
+                    s_next = next_state(problem["m"], problem["n"], s, u)
+                else:
+                    s_next = next_state(problem["m"], problem["n"], s, u_iter)
 
-            best = np.max(reward[s_pos, u] + values[u])   
+                idx = problem["pos2idx"][s_next[0], s_next[1]]
+                p = problem["Ts"][u][problem["pos2idx"][s[0], s[1]], idx]
+                values[u] += gamma * p * V[idx]
+
+            best = np.max(reward[s_pos, u] + values[u])
     else:
         best = reward[s_pos, 0]
 
     return best
 
 def actions_space(state, adim, m, n):
-
     act = []
     for u in range(adim):
         s_next = next_state(m, n, state, u)
@@ -95,7 +93,7 @@ def next_state(m, n, s, u):
         return np.array([xclip(s[0] + 0), yclip(s[1] - 1)])
 
 def plot_heatmap(data, ant):
-    m = data.T
+    m = np.array(data)
     ax = sb.heatmap(np.round(m, 3), annot=ant)
     ax.invert_yaxis()
     plt.show()
@@ -120,10 +118,11 @@ def main():
     gam = 0.95
     V_opt = value_iteration(problem, reward, terminal_mask, gam)
 
-    plt.figure(213)
-    visualize_value_function(np.array(V_opt).reshape((n, n)))
-    plt.title("value iteration")
-    plt.show()
+    #plt.figure(213)
+    #visualize_value_function(np.array(V_opt).reshape((n, n)))
+    #plt.title("value iteration")
+    #plt.show()
+    plot_heatmap(V_opt, False)
 
 
 if __name__ == "__main__":

@@ -126,7 +126,7 @@ def generate_problem():
     sdim, adim = m * n, 4
 
     # the parameters of the storm
-    x_eye, sig = np.array([15, 7]), 1e0
+    x_eye, sig = np.array([15, 15]), 10
 
     Ts, pos2idx, idx2pos = make_transition_matrices(m, n, x_eye, sig)
 

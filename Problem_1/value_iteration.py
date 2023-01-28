@@ -53,7 +53,7 @@ def value_iteration(problem, reward, terminal_mask, gam):
         if ii % 2 == 0:
             print(tf.get_static_value(err))
 
-        if tf.get_static_value(err) < 1e-4:
+        if tf.get_static_value(err) < 1e-7:
             print(ii)
             print(tf.get_static_value(err))
             break

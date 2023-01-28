@@ -55,10 +55,26 @@ def Q_learning(Q_network, reward_fn, is_terminal_fn, X, U, Xp, gam):
         ######### Your code starts here #########
         # apply a single step of gradient descent to the Q_network variables
         # take a look at the tf.keras.optimizers
-
+        pass
 
         ######### Your code ends here ###########
 
+## Compute the next state s next given an actual state and action   
+def next_state(problem , s, u):
+    m = problem["m"]
+    n = problem["n"]
+    xclip = lambda x: min(max(0, x), m - 1)
+    yclip = lambda y: min(max(0, y), n - 1)
+    pos2idx = problem["pos2idx"]
+    # {right, up, left, down}
+    if u == 0:
+        return pos2idx[int(xclip(s[0] + 1)), int(yclip(s[1] + 0))]
+    elif u == 1:
+        return pos2idx[int(xclip(s[0] + 0)), int(yclip(s[1] + 1))]
+    elif u == 2:
+        return pos2idx[int(xclip(s[0] - 1)), int(yclip(s[1] + 0))]
+    else:
+        return pos2idx[int(xclip(s[0] + 0)), int(yclip(s[1] - 1))]
 
 # Q-learning # #################################################################
 def main():
@@ -80,6 +96,7 @@ def main():
         X = tf.random.uniform([samp_nb], 0, sdim, dtype=tf.int32)
         U = tf.random.uniform([samp_nb], 0, 4, dtype=tf.int32)
         x_list, u_list, xp_list = [], [], []
+
         print("Sampling state transitions")
         for i in tqdm(range(samp_nb)):
             x = X[i]
@@ -96,6 +113,14 @@ def main():
             # remember that transition matrices have a shape [sdim, sdim]
             # remember that tf.random.categorical takes in the log of
             # probabilities, not the probabilities themselves
+            logits = Ts[u][x,:][Ts[u][x,:] != 0.]
+            cat = tf.random.categorical(tf.math.log([logits]), sdim)
+
+            u_random = cat[0, x]
+            if u_random == int(u):
+                xp = next_state(problem, idx2pos[x], u)
+            else:
+                xp = next_state(problem, idx2pos[x], u_random)
 
             ######### Your code ends here ###########
 

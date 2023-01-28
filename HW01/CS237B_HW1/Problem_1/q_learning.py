@@ -115,7 +115,6 @@ def main():
             # probabilities, not the probabilities themselves
             logits = Ts[u][x,:][Ts[u][x,:] != 0.]
             cat = tf.random.categorical(tf.math.log([logits]), sdim)
-
             u_random = cat[0, x]
             if u_random == int(u):
                 xp = next_state(problem, idx2pos[x], u)

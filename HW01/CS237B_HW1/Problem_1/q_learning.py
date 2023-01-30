@@ -36,7 +36,13 @@ def Q_learning(Q_network, reward_fn, is_terminal_fn, X, U, Xp, gam):
 
         # make sure to account for the reward, the terminal state and the
         # discount factor gam
+        
+        if not is_terminal_fn(X):
+            Q_next = reward_fn(X,U) + gam * next_Q
+        else:
+            Q_next = reward_fn(X,U)
 
+        l = tf.reduce_mean(tf.norm(Q_next - Q) ** 2)
         ######### Your code ends here ###########
 
         # need to regularize the Q-value, because we're training its difference
@@ -46,7 +52,8 @@ def Q_learning(Q_network, reward_fn, is_terminal_fn, X, U, Xp, gam):
     ######### Your code starts here #########
     # create the Adam optimizer with tensorflow keras
     # experiment with different learning rates [1e-4, 1e-3, 1e-2, 1e-1]
-
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
+    Q_network.compile(loss=loss, optimizer=optimizer)
 
     ######### Your code ends here ###########
 
@@ -150,6 +157,12 @@ def main():
     # it needs to take in 2 state + 1 action input (3 inputs)
     # it needs to output a single value (batch x 1 output) - the Q-value
     # it should be 3 layers deep with
+    Q_network = tf.keras.Sequential()
+
+    Q_network.add(tf.keras.layers.Dense(64, activation='relu', input_shape=(3,), name='Input'))
+    Q_network.add(tf.keras.layers.Dense(64, activation='relu', name='Hidden-Layer-01'))
+    Q_network.add(tf.keras.layers.Dense(64, activation='relu', name='Hidden-Layer-02'))
+    Q_network.add(tf.keras.layers.Dense(1, activation=None, name='output'))
 
     ######### Your code ends here ###########
 

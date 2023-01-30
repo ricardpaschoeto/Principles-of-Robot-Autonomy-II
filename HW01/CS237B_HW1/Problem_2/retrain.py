@@ -29,6 +29,9 @@ def get_bottleneck_dataset(model, img_dir, img_size):
         # bottleneck_x_l -> list of tensors with dimension [1, bottleneck_size]
         # bottleneck_y_l -> list of tensors with dimension [1, num_labels]
         # Fill in the parts indicated by #FILL#. No additional lines are required.
+        x_i, y_i = next(train_img_gen)
+        bottleneck_x_l.append(x_i)
+        bottleneck_y_l.append(y_i)
 
         ######### Your code ends here #########
 
@@ -70,8 +73,17 @@ def retrain(image_dir):
     #   2.4 Create a new model
     # 3. Define a loss and a evaluation metric
     # Fill in the parts indicated by #FILL#. No additional lines are required.
+    input_size = bottleneck_train_ds.element_spec[0].shape
+    output_size = bottleneck_train_ds.element_spec[1].shape[0]
 
-
+    retrain_model = tf.keras.Sequential([
+        tf.keras.layers.Input(shape=input_size),
+        tf.keras.layers.Flatten(name='flatten'),
+        tf.keras.layers.Dense(output_size, activation='sigmoid', name='classifier')
+    ])
+    retrain_model.summary()
+    retrain_model.build(input_size)
+    loss, metric = tf.keras.losses.CategoricalCrossentropy(from_logits=True, label_smoothing=0.1), 'accuracy'    
 
     ######### Your code ends here #########
 
@@ -96,6 +108,11 @@ def retrain(image_dir):
     # We now want to create the full model using the newly trained classifier
     # Use tensorflow keras Sequential to stack the base_model and the new layers
     # Fill in the parts indicated by #FILL#. No additional lines are required.
+    model = tf.keras.Sequential([
+        retrain_model.get_layer('classifier'),
+        base_model.layers,
+    ])
+    model.build(input_size)
     ######### Your code ends here #########
 
     model.compile(loss=loss, metrics=[metric])

@@ -1,0 +1,1 @@
+python retrain.py --image_dir D:/Users/User/OneDrive/Documentos/STANFORD/_Autonomous_Robot_II/HOMEWORKS/HW01/CS237B_HW1/Problem_2/datasets/train

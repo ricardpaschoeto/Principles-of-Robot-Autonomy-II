@@ -2,6 +2,8 @@ import argparse, pdb
 import numpy as np, tensorflow as tf
 from utils import IMG_SIZE, image_generator, LABELS, maybe_makedirs
 
+import tensorflow_hub as hub
+
 BATCH_SIZE = 100
 IMG_SHAPE = (IMG_SIZE, IMG_SIZE, 3)
 lr = 0.01
@@ -30,7 +32,8 @@ def get_bottleneck_dataset(model, img_dir, img_size):
         # bottleneck_y_l -> list of tensors with dimension [1, num_labels]
         # Fill in the parts indicated by #FILL#. No additional lines are required.
         x_i, y_i = next(train_img_gen)
-        bottleneck_x_l.append(x_i)
+        features = model.predict(x_i)
+        bottleneck_x_l.append(features)
         bottleneck_y_l.append(y_i)
 
         ######### Your code ends here #########
@@ -73,16 +76,16 @@ def retrain(image_dir):
     #   2.4 Create a new model
     # 3. Define a loss and a evaluation metric
     # Fill in the parts indicated by #FILL#. No additional lines are required.
-    input_size = bottleneck_train_ds.element_spec[0].shape
-    output_size = bottleneck_train_ds.element_spec[1].shape[0]
+    input_shape = bottleneck_train_ds.element_spec[0].shape[0]
+    output_shape = bottleneck_train_ds.element_spec[1].shape[0]
 
     retrain_model = tf.keras.Sequential([
-        tf.keras.layers.Input(shape=input_size),
+        tf.keras.layers.Input(shape=(input_shape,)),
         tf.keras.layers.Flatten(name='flatten'),
-        tf.keras.layers.Dense(output_size, activation='sigmoid', name='classifier')
+        tf.keras.layers.Dense(output_shape, activation='sigmoid', name='classifier')
     ])
-    retrain_model.summary()
-    retrain_model.build(input_size)
+
+    retrain_model.build(input_shape)
     loss, metric = tf.keras.losses.CategoricalCrossentropy(from_logits=True, label_smoothing=0.1), 'accuracy'    
 
     ######### Your code ends here #########
@@ -109,17 +112,16 @@ def retrain(image_dir):
     # Use tensorflow keras Sequential to stack the base_model and the new layers
     # Fill in the parts indicated by #FILL#. No additional lines are required.
     model = tf.keras.Sequential([
-        retrain_model.get_layer('classifier'),
-        base_model.layers,
+        hub.KerasLayer("https://tfhub.dev/google/imagenet/inception_v3/feature_vector/5"),
+        retrain_model.get_layer('classifier')
     ])
-    model.build(input_size)
+    model.build([None, IMG_SIZE, IMG_SIZE, 3])
     ######### Your code ends here #########
 
     model.compile(loss=loss, metrics=[metric])
 
     maybe_makedirs("trained_models")
     model.save("trained_models/trained.h5")
-
 
 if __name__ == "__main__":
     writer = tf.summary.create_file_writer("retrain_logs")

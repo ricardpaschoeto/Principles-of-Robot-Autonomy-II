@@ -2,8 +2,6 @@ import argparse, pdb
 import numpy as np, tensorflow as tf
 from utils import IMG_SIZE, image_generator, LABELS, maybe_makedirs
 
-import tensorflow_hub as hub
-
 BATCH_SIZE = 100
 IMG_SHAPE = (IMG_SIZE, IMG_SIZE, 3)
 lr = 0.01
@@ -83,10 +81,10 @@ def retrain(image_dir):
         tf.keras.layers.Input(shape=(input_shape,)),
         tf.keras.layers.Flatten(name='flatten'),
         tf.keras.layers.Dense(output_shape, activation='sigmoid', name='classifier')
-    ])
+    ], name='linear_classifier' )
 
     retrain_model.build(input_shape)
-    loss, metric = tf.keras.losses.CategoricalCrossentropy(from_logits=True, label_smoothing=0.1), 'accuracy'    
+    loss, metric = 'mse', 'accuracy'    
 
     ######### Your code ends here #########
 
@@ -112,10 +110,11 @@ def retrain(image_dir):
     # Use tensorflow keras Sequential to stack the base_model and the new layers
     # Fill in the parts indicated by #FILL#. No additional lines are required.
     model = tf.keras.Sequential([
-        hub.KerasLayer("https://tfhub.dev/google/imagenet/inception_v3/feature_vector/5"),
-        retrain_model.get_layer('classifier')
+        tf.keras.layers.InputLayer(input_shape=IMG_SHAPE),
+        base_model,
+        retrain_model
     ])
-    model.build([None, IMG_SIZE, IMG_SIZE, 3])
+    model.summary()
     ######### Your code ends here #########
 
     model.compile(loss=loss, metrics=[metric])

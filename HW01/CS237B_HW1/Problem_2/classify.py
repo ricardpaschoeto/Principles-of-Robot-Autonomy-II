@@ -25,7 +25,19 @@ def classify(model, test_dir):
     # filename of the datapoint
         # break after 1 epoch
                 #pdb.set_trace()
+    num_test = test_img_gen.samples
+    missclassified = []
+    for ii in range(num_test):
+        image, label = next(test_img_gen)
+        true_index = np.argmax(label)
+        scores = model.predict(image)
+        predict_index = np.argmax(scores)
+        if predict_index != true_index:
+            if  test_img_gen.filenames[ii] not in missclassified:
+                missclassified.append(test_img_gen.filenames[ii])
 
+    print(missclassified)
+    accuracy = model.evaluate(test_img_gen)[1]
 
     ######### Your code ends here #########
 

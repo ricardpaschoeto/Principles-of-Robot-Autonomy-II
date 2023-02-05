@@ -32,10 +32,29 @@ def compute_brute_force_classification(model, image_path, nH=8, nW=8):
     raw_image = decode_jpeg(image_path).numpy()
 
     ######### Your code starts here #########
+    def sliding_window(image, h_step, w_step, window_shape):
+        for y in range(0, image.shape[0] - window_shape[1], h_step):
+            for x in range(0, image.shape[1] - window_shape[0], w_step):
+                yield(x, y, image[y:y + window_shape[1], x:x + window_shape[0], :])
 
+    window_predictions = np.zeros((nH, nW, 3))
+    window_shape = (int(raw_image.shape[0]/nH), int(raw_image.shape[1]/nW), 3)
+    windows = sliding_window(raw_image, window_shape[0], window_shape[1], window_shape)
+    
+    for window in windows:
+        x = int(window[0]/window_shape[1])
+        y = int(window[1]/window_shape[0])
 
-
-
+        padded_window = tf.image.resize_with_pad(window[2], window[2].shape[0]+20, window[2].shape[1]+20)
+        normalized_image = normalize_resize_image(padded_window, IMG_SIZE)
+        image_batch = tf.expand_dims(normalized_image, axis=0)
+        features = np.squeeze(model(image_batch))
+        if (nH == 3 and nW == 4) and (x == 1 and y == 1):
+            classes = ['cat', 'dog', 'neg']
+            idx = np.argmax(features)
+            print('The classification at Blue Window (1,1) is :', classes[idx])
+        window_predictions[y, x, :] = features
+    
     ######### Your code ends here #########
 
     return window_predictions
@@ -70,6 +89,11 @@ def compute_convolutional_KxK_classification(model, image_path):
 
     # Reshape so that patches become batches and predict
     ######### Your code ends here #########
+    K = conv_model.layers[-1].output_shape[1]
+
+
+
+    predictionsKxK = []
 
     return np.reshape(predictionsKxK, [K, K, -1])
 
@@ -91,11 +115,21 @@ def compute_and_plot_saliency(model, image_path):
     logits_tensor = model.get_layer("classifier")
     logits_model = tf.keras.Model(model.input, logits_tensor.output)
 
+    def prep_input(raw_image):
+        image = tf.expand_dims(raw_image, axis=0)
+        image = normalize_resize_image(image, IMG_SIZE)
+        return image
+
+    input_image = prep_input(raw_image)
     with tf.GradientTape() as t:
         ######### Your code starts here #########
         # Fill in the parts indicated by #FILL#. No additional lines are
         # required.
-
+        t.watch(input_image)    
+        S = logits_model(input_image)
+    top_class = tf.argmax(S[0,:])        
+    w = t.gradient(S, input_image)
+    M = tf.reduce_max(w[0], axis=2)
 
 
         ######### Your code ends here #########
@@ -143,6 +177,7 @@ if __name__ == "__main__":
     maybe_makedirs("../plots")
 
     model = tf.keras.models.load_model("./trained_models/trained.h5")
+    #model = tf.keras.models.load_model("D:/Users/User/OneDrive/Documentos/STANFORD/_Autonomous_Robot_II/HOMEWORKS/HW01/CS237B_HW1/Problem_2/trained_models/trained.h5")
     model.__call__ = tf.function(model.__call__)
 
     writer = tf.summary.create_file_writer("retrain_logs")

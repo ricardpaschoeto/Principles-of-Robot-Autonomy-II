@@ -52,7 +52,7 @@ def retrain(image_dir):
         weights="imagenet",
     )
 
-    base_model.summary()
+    #base_model.summary()
     base_model.compile(loss="mse")
 
     print("Generating Bottleneck Dataset... this may take some minutes.")
@@ -80,6 +80,7 @@ def retrain(image_dir):
     retrain_model = tf.keras.Sequential([
         tf.keras.layers.Input(shape=(input_shape,)),
         tf.keras.layers.Flatten(name='flatten'),
+        tf.keras.layers.Dropout(rate=0.2),
         tf.keras.layers.Dense(output_shape, activation='sigmoid', name='classifier')
     ], name='linear_classifier' )
 
@@ -110,10 +111,10 @@ def retrain(image_dir):
     # Use tensorflow keras Sequential to stack the base_model and the new layers
     # Fill in the parts indicated by #FILL#. No additional lines are required.
     model = tf.keras.Sequential([
-        tf.keras.layers.InputLayer(input_shape=IMG_SHAPE),
         base_model,
         retrain_model
-    ])
+    ], name = 'full_model')
+
     model.summary()
     ######### Your code ends here #########
 

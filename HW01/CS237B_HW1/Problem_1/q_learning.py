@@ -36,13 +36,9 @@ def Q_learning(Q_network, reward_fn, is_terminal_fn, X, U, Xp, gam):
 
         # make sure to account for the reward, the terminal state and the
         # discount factor gam
-        
-        if not is_terminal_fn(X):
-            Q_next = reward_fn(X,U) + gam * next_Q
-        else:
-            Q_next = reward_fn(X,U)
-
-        l = tf.reduce_mean(tf.norm(Q_next - Q) ** 2)
+        n = next_Q.shape[0]
+        Q_target= tf.reshape(reward_fn(X_,U_), (n,1)) +  gam * (tf.linalg.diag((1. - tf.cast(is_terminal_fn(X_), tf.float32))) @ tf.reshape(next_Q, (n, 1)))      
+        l = tf.reduce_mean(tf.norm(tf.reshape(Q_target, [-1]) - Q) ** 2)
         ######### Your code ends here ###########
 
         # need to regularize the Q-value, because we're training its difference
@@ -52,17 +48,18 @@ def Q_learning(Q_network, reward_fn, is_terminal_fn, X, U, Xp, gam):
     ######### Your code starts here #########
     # create the Adam optimizer with tensorflow keras
     # experiment with different learning rates [1e-4, 1e-3, 1e-2, 1e-1]
-    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
-    Q_network.compile(loss=loss, optimizer=optimizer)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-1)
 
     ######### Your code ends here ###########
-
     print("Training the Q-network")
     for _ in tqdm(range(int(1e4))):
         ######### Your code starts here #########
         # apply a single step of gradient descent to the Q_network variables
         # take a look at the tf.keras.optimizers
-        pass
+        with tf.GradientTape() as tape:        
+            l = loss()
+        grads = tape.gradient(l, Q_network.trainable_variables)
+        optimizer.apply_gradients(zip(grads, Q_network.trainable_variables))
 
         ######### Your code ends here ###########
 
@@ -120,14 +117,27 @@ def main():
             # remember that transition matrices have a shape [sdim, sdim]
             # remember that tf.random.categorical takes in the log of
             # probabilities, not the probabilities themselves
-            logits = Ts[u][x,:][Ts[u][x,:] != 0.]
-            cat = tf.random.categorical(tf.math.log([logits]), sdim)
-            u_random = cat[0, x]
-            if u_random == int(u):
-                xp = next_state(problem, idx2pos[x], u)
-            else:
-                xp = next_state(problem, idx2pos[x], u_random)
+            # {right, up, left, down}
+            def identify_direction(x):
+                right = next_state(problem , x, 0)
+                up = next_state(problem , x, 1)
+                left = next_state(problem, x, 2)
+                down = next_state(problem, x, 3)
 
+                return [right, up, left, down]
+            logits = np.zeros((4))
+            all_xp_prob_u = Ts[u][x,:]
+            dirs = identify_direction(idx2pos[x])
+
+            logits[0] = all_xp_prob_u[dirs[0]]
+            logits[1] = all_xp_prob_u[dirs[1]]
+            logits[2] = all_xp_prob_u[dirs[2]]
+            logits[3] = all_xp_prob_u[dirs[3]]
+
+            cat = tf.random.categorical(tf.math.log([logits]), sdim, dtype='int32')
+            one_hot = tf.one_hot(x, sdim)          
+            u_rand = cat[0, tf.where(one_hot)[0][0]]
+            xp = next_state(problem, idx2pos[x], u_rand)
             ######### Your code ends here ###########
 
             # convert integer states to a 2D representation using idx2pos
@@ -162,10 +172,11 @@ def main():
     Q_network.add(tf.keras.layers.Dense(64, activation='relu', input_shape=(3,), name='Input'))
     Q_network.add(tf.keras.layers.Dense(64, activation='relu', name='Hidden-Layer-01'))
     Q_network.add(tf.keras.layers.Dense(64, activation='relu', name='Hidden-Layer-02'))
-    Q_network.add(tf.keras.layers.Dense(1, activation=None, name='output'))
+    Q_network.add(tf.keras.layers.Flatten())
+    Q_network.add(tf.keras.layers.Dense(1, name='output'))
 
+    Q_network.summary()
     ######### Your code ends here ###########
-
     # train the Q-network ##################################
     gam = 0.95
     Q_learning(Q_network, reward_fn, is_terminal_fn, X, U, Xp, gam)

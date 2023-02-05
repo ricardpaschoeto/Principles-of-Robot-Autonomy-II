@@ -96,7 +96,7 @@ def plot_heatmap(problem, data, m, n, ant):
     for t in p:
         ax.add_patch(Rectangle(t, 1, 1, fill=False, edgecolor='blue', lw=3))
     plt.show()
-
+    
 ## Function to simulate the MDP starting from x = (0, 0) over N = 100 time steps
 def path(problem, policy, s_start, s_goal, m, n):
     p = []
@@ -146,12 +146,11 @@ def main():
     gam = 0.95
     V_opt, policy = value_iteration(problem, reward, terminal_mask, gam)
 
-    # plt.figure(213)
-    # visualize_value_function(np.array(V_opt).reshape((n, n)))
-    # plt.title("value iteration")
-    # plt.show()
-    plot_heatmap(problem, V_opt, n, n, False)
-    plot_heatmap(problem, policy, n, n, True)
+    plt.figure(213)
+    visualize_value_function(np.array(V_opt).reshape((n, n)))
+    plt.title("value iteration")
+    plt.show()
+    plot_heatmap(problem, policy, n, n, False)
 
 if __name__ == "__main__":
     main()

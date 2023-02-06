@@ -177,8 +177,7 @@ if __name__ == "__main__":
     FLAGS, _ = parser.parse_known_args()
     maybe_makedirs("../plots")
 
-    #model = tf.keras.models.load_model("./trained_models/trained.h5")
-    model = tf.keras.models.load_model("D:/Users/User/OneDrive/Documentos/STANFORD/_Autonomous_Robot_II/HOMEWORKS/HW01/CS237B_HW1/Problem_2/trained_models/trained.h5")
+    model = tf.keras.models.load_model("./trained_models/trained.h5")
     model.__call__ = tf.function(model.__call__)
 
     writer = tf.summary.create_file_writer("retrain_logs")

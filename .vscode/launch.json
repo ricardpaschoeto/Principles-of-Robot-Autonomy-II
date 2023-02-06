@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--image_dir", "${fileDirname}/datasets/train"]
+            "args": ["--scheme", "conv", "--image", "${fileDirname}/datasets/catswithdogs/002034.jpg"]
         }
     ]
 }

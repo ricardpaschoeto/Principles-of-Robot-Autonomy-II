@@ -89,12 +89,13 @@ def compute_convolutional_KxK_classification(model, image_path):
 
     # Reshape so that patches become batches and predict
     ######### Your code ends here #########
-    K = conv_model.layers[-1].output_shape[1]
-
-
-
     predictionsKxK = []
 
+    K = conv_model.layers[-1].output_shape[1]
+    input_layer = tf.keras.Input((conv_model.layers[-1].output_shape[-1],))
+    trained = model.get_layer('classifier')(input_layer)
+    predict = conv_model(resized_patch)(trained)   
+    
     return np.reshape(predictionsKxK, [K, K, -1])
 
 
@@ -176,8 +177,8 @@ if __name__ == "__main__":
     FLAGS, _ = parser.parse_known_args()
     maybe_makedirs("../plots")
 
-    model = tf.keras.models.load_model("./trained_models/trained.h5")
-    #model = tf.keras.models.load_model("D:/Users/User/OneDrive/Documentos/STANFORD/_Autonomous_Robot_II/HOMEWORKS/HW01/CS237B_HW1/Problem_2/trained_models/trained.h5")
+    #model = tf.keras.models.load_model("./trained_models/trained.h5")
+    model = tf.keras.models.load_model("D:/Users/User/OneDrive/Documentos/STANFORD/_Autonomous_Robot_II/HOMEWORKS/HW01/CS237B_HW1/Problem_2/trained_models/trained.h5")
     model.__call__ = tf.function(model.__call__)
 
     writer = tf.summary.create_file_writer("retrain_logs")

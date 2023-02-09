@@ -33,7 +33,7 @@ def wrench(f, p):
     """
     ########## Your code starts here ##########
     # Hint: you may find cross_matrix(x) defined above helpful. This should be one line of code.
-
+    w = np.concatenate((f, cross_matrix(p) @ f))
     ########## Your code ends here ##########
 
     return w
@@ -97,13 +97,22 @@ def form_closure_program(F):
     # k = cp.Variable(1)
     # objective = cp.Minimize(k)
     # constraints = [k >= 0]
-
+    rank = np.linalg.matrix_rank(F)
+    if rank == F.shape[0]:
+        k = cp.Variable(shape=(F.shape[1],1), name='k')
+        objective = cp.Minimize(np.ones((1, F.shape[1])) @ k)
+        if F.shape[1] == 4:
+            constraints = [F @ k == 0, k[0] >= 1, k[1] >= 1, k[2] >= 1, k[3] >= 1 ]
+        else:
+            constraints = [F @ k == 0, k[0] >= 1, k[1] >= 1, k[2] >= 1, k[3] >= 1, k[4] >= 1, k[5] >= 1, k[6] >= 1 ]
+    else:
+        return False        
 
     ########## Your code ends here ##########
 
     prob = cp.Problem(objective, constraints)
     prob.solve(verbose=False, solver=cp.ECOS)
-
+    print(prob.status)
     return prob.status not in ['infeasible', 'unbounded']
 
 def is_in_form_closure(normals, points):
@@ -120,9 +129,23 @@ def is_in_form_closure(normals, points):
     """
     ########## Your code starts here ##########
     # TODO: Construct the F matrix (not necessarily 6 x 7)
-    F = np.zeros((6,7))
-
-
+    if points[0].shape[0] == 2:
+        F = np.zeros((3,4))
+        for ii, (force, point) in enumerate(zip(normals, points)):
+            w = wrench(force, point)
+            F[0, ii] = w[0]
+            F[1, ii] = w[1]
+            F[2, ii] = w[2]
+    elif points[0].shape[0] == 3:
+        F = np.zeros((6,7))
+        for ii, (force, point) in enumerate(zip(normals, points)):
+            w = wrench(force, point)
+            F[0, ii] = w[0]
+            F[1, ii] = w[1]
+            F[2, ii] = w[2]
+            F[3, ii] = w[3]
+            F[4, ii] = w[4]
+            F[5, ii] = w[5]
     ########## Your code ends here ##########
 
     return form_closure_program(F)

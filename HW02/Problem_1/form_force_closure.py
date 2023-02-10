@@ -63,16 +63,31 @@ def cone_edges(f, mu):
     if D == 2:
         ########## Your code starts here ##########
         edges = [np.zeros(D)] * 2
-
+        alpha = np.arctan(mu)
+        edges[0] =  f * np.cos(alpha) 
+        edges[1] = -f * np.cos(alpha)
         ########## Your code ends here ##########
 
     # Spatial wrenches
     elif D == 3:
         ########## Your code starts here ##########
         edges = [np.zeros(D)] * 4
-
-        
-        ########## Your code ends here ##########
+        if np.where(f != 0)[0] == 0:
+            edges[0] = np.array([1,  mu,   0])
+            edges[1] = np.array([1, -mu,   0])
+            edges[2] = np.array([1,   0,  mu])
+            edges[3] = np.array([1,   0, -mu])
+        elif np.where(f != 0)[0] == 1:
+            edges[0] = np.array([ mu, 1,   0])
+            edges[1] = np.array([-mu, 1,   0])
+            edges[2] = np.array([0,   1,  mu])
+            edges[3] = np.array([0,   1, -mu])
+        else:
+            edges[0] = np.array([ mu, 0, 1])
+            edges[1] = np.array([-mu, 0, 1])
+            edges[2] = np.array([0,  mu, 1])
+            edges[3] = np.array([0, -mu, 1])   
+        ######### Your code ends here ##########
 
     else:
         raise RuntimeError("cone_edges(): f must be 3D or 6D. Received a {}D vector.".format(D))
@@ -101,10 +116,7 @@ def form_closure_program(F):
     if rank == F.shape[0]:
         k = cp.Variable(shape=(F.shape[1],1), name='k')
         objective = cp.Minimize(np.ones((1, F.shape[1])) @ k)
-        if F.shape[1] == 4:
-            constraints = [F @ k == 0, k[0] >= 1, k[1] >= 1, k[2] >= 1, k[3] >= 1 ]
-        else:
-            constraints = [F @ k == 0, k[0] >= 1, k[1] >= 1, k[2] >= 1, k[3] >= 1, k[4] >= 1, k[5] >= 1, k[6] >= 1 ]
+        constraints = [F @ k == 0, k >= 1]
     else:
         return False        
 
@@ -165,8 +177,24 @@ def is_in_force_closure(forces, points, friction_coeffs):
     """
     ########## Your code starts here ##########
     # TODO: Call cone_edges() to construct the F matrix (not necessarily 6 x 7)
-    F = np.zeros((6,7))    
-
+    j = points[0].shape[0]
+    if j == 2:
+        F = np.zeros((3,2*j))
+        for ii, (force, point) in enumerate(zip(normals, points)):
+            w = wrench(force, point)
+            F[0, ii] = w[0]
+            F[1, ii] = w[1]
+            F[2, ii] = w[2]
+    elif points[0].shape[0] == 3:
+        F = np.zeros((6,7))
+        for ii, (force, point) in enumerate(zip(normals, points)):
+            w = wrench(force, point)
+            F[0, ii] = w[0]
+            F[1, ii] = w[1]
+            F[2, ii] = w[2]
+            F[3, ii] = w[3]
+            F[4, ii] = w[4]
+            F[5, ii] = w[5]
 
     ########## Your code ends here ##########
 

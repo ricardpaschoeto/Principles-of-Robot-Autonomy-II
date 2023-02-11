@@ -63,9 +63,12 @@ def cone_edges(f, mu):
     if D == 2:
         ########## Your code starts here ##########
         edges = [np.zeros(D)] * 2
-        alpha = np.arctan(mu)
-        edges[0] =  f * np.cos(alpha) 
-        edges[1] = -f * np.cos(alpha)
+        if np.where(f != 0)[0] == 0:
+            edges[0] =  np.array([f[0],  f[0] * mu])
+            edges[1] =  np.array([f[0], -f[0] * mu])
+        else:
+            edges[0] =  np.array([ f[1] * mu, f[1]])
+            edges[1] =  np.array([-f[1] * mu, f[1]])            
         ########## Your code ends here ##########
 
     # Spatial wrenches
@@ -73,20 +76,20 @@ def cone_edges(f, mu):
         ########## Your code starts here ##########
         edges = [np.zeros(D)] * 4
         if np.where(f != 0)[0] == 0:
-            edges[0] = np.array([1,  mu,   0])
-            edges[1] = np.array([1, -mu,   0])
-            edges[2] = np.array([1,   0,  mu])
-            edges[3] = np.array([1,   0, -mu])
+            edges[0] = np.array([f[0], f[0] * mu,   0])
+            edges[1] = np.array([f[0], -f[0] * mu,   0])
+            edges[2] = np.array([f[0],   0,  f[0] * mu])
+            edges[3] = np.array([f[0],   0, -f[0] * mu])
         elif np.where(f != 0)[0] == 1:
-            edges[0] = np.array([ mu, 1,   0])
-            edges[1] = np.array([-mu, 1,   0])
-            edges[2] = np.array([0,   1,  mu])
-            edges[3] = np.array([0,   1, -mu])
+            edges[0] = np.array([ f[1] * mu, f[1],   0])
+            edges[1] = np.array([-f[1] * mu, f[1],   0])
+            edges[2] = np.array([0,   f[1],  f[1] * mu])
+            edges[3] = np.array([0,   f[1], -f[1] * mu])
         else:
-            edges[0] = np.array([ mu, 0, 1])
-            edges[1] = np.array([-mu, 0, 1])
-            edges[2] = np.array([0,  mu, 1])
-            edges[3] = np.array([0, -mu, 1])   
+            edges[0] = np.array([ f[2] * mu, 0, f[2]])
+            edges[1] = np.array([-f[2] * mu, 0, f[2]])
+            edges[2] = np.array([0,  f[2] * mu, f[2]])
+            edges[3] = np.array([0, -f[2] * mu, f[2]])   
         ######### Your code ends here ##########
 
     else:
@@ -124,7 +127,6 @@ def form_closure_program(F):
 
     prob = cp.Problem(objective, constraints)
     prob.solve(verbose=False, solver=cp.ECOS)
-    print(prob.status)
     return prob.status not in ['infeasible', 'unbounded']
 
 def is_in_form_closure(normals, points):
@@ -177,25 +179,13 @@ def is_in_force_closure(forces, points, friction_coeffs):
     """
     ########## Your code starts here ##########
     # TODO: Call cone_edges() to construct the F matrix (not necessarily 6 x 7)
-    j = points[0].shape[0]
-    if j == 2:
-        F = np.zeros((3,2*j))
-        for ii, (force, point) in enumerate(zip(normals, points)):
-            w = wrench(force, point)
-            F[0, ii] = w[0]
-            F[1, ii] = w[1]
-            F[2, ii] = w[2]
-    elif points[0].shape[0] == 3:
-        F = np.zeros((6,7))
-        for ii, (force, point) in enumerate(zip(normals, points)):
-            w = wrench(force, point)
-            F[0, ii] = w[0]
-            F[1, ii] = w[1]
-            F[2, ii] = w[2]
-            F[3, ii] = w[3]
-            F[4, ii] = w[4]
-            F[5, ii] = w[5]
-
+    F = []
+    for force, point, mu in zip(forces, points, friction_coeffs):
+        edges = cone_edges(force, mu)
+        for edge in edges:
+            w = wrench(edge, point)
+            F.append(w)                  
+    F = np.asarray(F).T
     ########## Your code ends here ##########
 
     return form_closure_program(F)

@@ -37,7 +37,7 @@ def solve_socp(x, As, bs, cs, ds, F, g, h, verbose=False):
     constraints.append(F @ x == g)
     prob = cp.Problem(objective, constraints)
     prob.solve(verbose=verbose)
-
+    print(prob.status)
     if prob.status in ['infeasible', 'unbounded']:
         return None
 
@@ -63,16 +63,60 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
 
     ########## Your code starts here ##########
     As = []
-    bs = []
+    for ii in range(M):
+        A = np.zeros((D, D*M))
+        if D == 2:
+            A[0][ii * D] = 1          
+        elif D == 3:
+            A[0][ii * D] = 1
+            A[1][ii * D + 1] = 1
+        As.append(A)
+            
+    bs = [np.zeros((D))] * M
+
     cs = []
-    ds = []
+    for ii, mu in enumerate(friction_coeffs):
+        c = np.zeros((D*M,))
+        if D == 2:
+            c[2*ii + 1] = mu
+        elif D == 3:
+            c[3*ii + 2] = mu  
+        cs.append(np.array(c))
 
+    f0 = np.reshape(grasp_normals, (D*M,))
 
+    ds = [0] * M
+    #ds = []
+    for ii in range(M):
+        ds.append(np.linalg.norm(As[ii] @ f0 + bs[ii], 2) - cs[ii].T @ f0)
+
+    g = -wrench_ext
+
+    s = (1 + np.power(friction_coeffs, 2)) ** (0.5)
+    v = [np.zeros((1,D))] * M
+    for ii in range(M):
+        if D == 2:
+            v[ii] = np.array([0, s[ii]])
+        elif D == 3:
+            v[ii] = np.array([0, 0, s[ii]])
+    h = np.reshape(np.asarray(v), (M*D,))
+
+    Px = np.asarray([cross_matrix(point) for point in points])
+    T = transformations
+    F = np.row_stack((T[0], Px[0] @ T[0]))
+    for ii in range(1,M):
+        temp = np.row_stack((T[ii], Px[ii] @ T[ii]))
+        F = np.column_stack((F,temp))
+
+    x = cp.Variable(D*M)
     x = solve_socp(x, As, bs, cs, ds, F, g, h, verbose=False)
 
     # TODO: extract the grasp forces from x as a stacked 1D vector
-    f = x[:-1]
-
+    f = []
+    for ii in range(D-1, M*D, D):
+        v = np.reshape(x[ii-(D-1):ii+1], (1, D))
+        f.append(v)
+    f = np.round(np.asarray(f), 5)
     ########## Your code ends here ##########
 
     # Transform the forces to the global frame

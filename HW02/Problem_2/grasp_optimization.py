@@ -2,7 +2,7 @@
 
 import cvxpy as cp
 import numpy as np
-import pdb  
+import pdb
 
 from utils import *
 
@@ -63,36 +63,32 @@ def grasp_optimization(grasp_normals, points, friction_coeffs, wrench_ext):
 
     ########## Your code starts here ##########
     As = []
+    A = np.zeros((D, M*D))
     for ii in range(M):
-        A = np.zeros((D, D*M))
-        if D == 2:
-            A[0][ii * D] = 1          
+        A = np.zeros((D, M*D))
+        if D == 2:      
+            A[0][ii*D] = 1
+            A[1][ii*D+1] = 1
         elif D == 3:
-            A[0][ii * D] = 1
-            A[1][ii * D + 1] = 1
-        As.append(A)
-            
-    bs = [np.zeros((D))] * M
+            A[0][ii*D] = 1
+            A[1][ii*D+1] = 1
+            A[2][ii*D+2] = 1
+        As.append(A)                
 
+    bs = [np.zeros((D))] * M
     cs = []
-    for ii, mu in enumerate(friction_coeffs):
+    s = (1 + np.power(friction_coeffs, 2)) ** (0.5)
+    for ii in range(M):
         c = np.zeros((D*M,))
         if D == 2:
-            c[2*ii + 1] = mu
+            c[2*ii + 1] = s[ii]
         elif D == 3:
-            c[3*ii + 2] = mu  
+            c[3*ii + 2] = s[ii]  
         cs.append(np.array(c))
 
-    f0 = np.reshape(grasp_normals, (D*M,))
-
     ds = [0] * M
-    #ds = []
-    for ii in range(M):
-        ds.append(np.linalg.norm(As[ii] @ f0 + bs[ii], 2) - cs[ii].T @ f0)
-
     g = -wrench_ext
 
-    s = (1 + np.power(friction_coeffs, 2)) ** (0.5)
     v = [np.zeros((1,D))] * M
     for ii in range(M):
         if D == 2:

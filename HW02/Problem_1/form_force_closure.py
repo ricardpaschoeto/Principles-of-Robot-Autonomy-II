@@ -63,7 +63,7 @@ def cone_edges(f, mu):
     if D == 2:
         ########## Your code starts here ##########
         edges = [np.zeros(D)] * 2
-        if np.where(f != 0)[0] == 0:
+        if np.where(f != 0)[0][0] == 0:
             edges[0] =  np.array([f[0],  f[0] * mu])
             edges[1] =  np.array([f[0], -f[0] * mu])
         else:
@@ -75,12 +75,12 @@ def cone_edges(f, mu):
     elif D == 3:
         ########## Your code starts here ##########
         edges = [np.zeros(D)] * 4
-        if np.where(f != 0)[0] == 0:
+        if np.where(f != 0)[0][0] == 0:
             edges[0] = np.array([f[0], f[0] * mu,   0])
             edges[1] = np.array([f[0], -f[0] * mu,   0])
             edges[2] = np.array([f[0],   0,  f[0] * mu])
             edges[3] = np.array([f[0],   0, -f[0] * mu])
-        elif np.where(f != 0)[0] == 1:
+        elif np.where(f != 0)[0][0] == 1:
             edges[0] = np.array([ f[1] * mu, f[1],   0])
             edges[1] = np.array([-f[1] * mu, f[1],   0])
             edges[2] = np.array([0,   f[1],  f[1] * mu])
@@ -143,15 +143,16 @@ def is_in_form_closure(normals, points):
     """
     ########## Your code starts here ##########
     # TODO: Construct the F matrix (not necessarily 6 x 7)
+    M = points[0].shape[0]
     if points[0].shape[0] == 2:
-        F = np.zeros((3,4))
+        F = np.zeros((M+1,len(points)))
         for ii, (force, point) in enumerate(zip(normals, points)):
             w = wrench(force, point)
             F[0, ii] = w[0]
             F[1, ii] = w[1]
             F[2, ii] = w[2]
     elif points[0].shape[0] == 3:
-        F = np.zeros((6,7))
+        F = np.zeros((2*M,len(points)))
         for ii, (force, point) in enumerate(zip(normals, points)):
             w = wrench(force, point)
             F[0, ii] = w[0]

@@ -37,7 +37,6 @@ def solve_socp(x, As, bs, cs, ds, F, g, h, verbose=False):
     constraints.append(F @ x == g)
     prob = cp.Problem(objective, constraints)
     prob.solve(verbose=verbose)
-    print(prob.status)
     if prob.status in ['infeasible', 'unbounded']:
         return None
 
@@ -143,9 +142,32 @@ def precompute_force_closure(grasp_normals, points, friction_coeffs):
     # TODO: Precompute the optimal forces for the 12 signed unit external
     #       wrenches and store them as rows in the matrix F. This matrix will be
     #       captured by the returned force_closure() function.
-    F = np.zeros((2*N, M*D))
+    F = []
+    if D == 3:
+        ext_wrenchs = [np.array( 1, 0, 0, 0, 0, 0),
+                       np.array(-1, 0, 0, 0, 0, 0), 
+                       np.array(0,  1, 0, 0, 0, 0),
+                       np.array(0, -1, 0, 0, 0, 0),
+                       np.array(0, 0,  1, 0, 0, 0),
+                       np.array(0, 0, -1, 0, 0, 0),
+                       np.array(0, 0,  0, 1, 0, 0),
+                       np.array(0, 0,  0,-1, 0, 0),
+                       np.array(0, 0,  0, 0, 1, 0),
+                       np.array(0, 0,  0, 0, -1, 0),
+                       np.array(0, 0,  0, 0, 0, 1),
+                       np.array(0, 0,  0, 0, 0, -1),]
+    elif D == 2:
+        ext_wrenchs = [np.array([1, 0, 0]),
+                       np.array([-1, 0, 0]),
+                       np.array([0, 1, 0]),
+                       np.array([0, -1, 0]),
+                       np.array([0, 0, 1]),
+                       np.array([0, 0, -1])]
 
-
+    for _, w in enumerate(ext_wrenchs):
+        f = grasp_optimization(grasp_normals, points, friction_coeffs, w)
+        F.append(f)
+    F = np.reshape(np.asarray(F), (2*N, M*D))
     ########## Your code ends here ##########
 
     def force_closure(wrench_ext):
@@ -163,7 +185,12 @@ def precompute_force_closure(grasp_normals, points, friction_coeffs):
         ########## Your code starts here ##########
         # TODO: Compute the force closure forces as a stacked vector of shape (M*D)
         f = np.zeros(M*D)
+        w_ext_max_min = np.zeros(2*N)
+        for ii in range(len(wrench_ext)-1):
+            w_ext_max_min[2*ii] = np.maximum(0, wrench_ext[ii]) # w+
+            w_ext_max_min[2*ii+1] = np.maximum(0, -wrench_ext[ii]) # w_
 
+        f = w_ext_max_min @ F
   
         ########## Your code ends here ##########
 

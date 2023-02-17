@@ -23,7 +23,7 @@ class AccelerationLaw(tf.keras.layers.Layer):
         mu, th = inputs
 
         ########## Your code starts here ##########
-        a = tf.abs(self.g * (tf.sin(th) - mu * tf.cos(th)))
+        a = self.g * (tf.sin(th) - mu * tf.cos(th))
         ########## Your code ends here ##########
 
         # Ensure output acceleration is positive
@@ -58,14 +58,16 @@ def build_model():
     ########## Your code starts here ##########
     # TODO: Create your neural network and replace the following two layers
     #       according to the given specification.
-    x = tf.keras.layers.Dense(32, activation='relu')(img_input)
+    x = tf.keras.layers.Dense(128, activation='relu')(img_input)
     x = tf.keras.layers.Dropout(0.2)(x)
+    x = tf.keras.layers.Flatten()(x)
     p_class = tf.keras.layers.Dense(32, activation='softmax', name='p_class')(x)
-    mu = tf.keras.layers.Dense(32, name='mu')(p_class)
+    mu = tf.keras.layers.Dense(32, activation='linear', name='mu')(p_class)
 
+    mu_pred = tf.keras.layers.Dot(axes=1)([p_class, mu])
     ########## Your code ends here ##########
 
-    a_pred = AccelerationLaw(name='a')((mu, th_input))
+    a_pred = AccelerationLaw(name='a')((mu_pred, th_input))
 
     return tf.keras.Model(inputs=[img_input, th_input], outputs=[a_pred])
 
@@ -90,8 +92,9 @@ def build_baseline_model():
 
     ########## Your code starts here ##########
     # TODO: Replace the following with your model from build_model().
-    model = build_model()
-    a_pred = model((model.output, th_input))
+    x = tf.keras.layers.Dense(32, activation='relu')(img_input)
+    x = tf.keras.layers.Dropout(0.2)(x)
+    a_pred = None
     ########## Your code ends here ##########
 
     return tf.keras.Model(inputs=[img_input, th_input], outputs=[a_pred])
@@ -102,7 +105,7 @@ def loss(a_actual, a_pred):
     """
 
     ########## Your code starts here ##########
-    l = tf.reduce_mean(tf.norm((a_actual - a_pred))**2)
+    l = tf.norm([a_actual - a_pred], ord=2)
     ########## Your code ends here ##########
 
     return l

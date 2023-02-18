@@ -1,0 +1,4 @@
+tensorflow_probability==0.11.0
+cloudpickle
+gym
+numpy==1.23.1

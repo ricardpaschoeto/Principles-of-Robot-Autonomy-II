@@ -58,16 +58,31 @@ def build_model():
     ########## Your code starts here ##########
     # TODO: Create your neural network and replace the following two layers
     #       according to the given specification.
-    x = tf.keras.layers.Dense(128, activation='relu')(img_input)
-    x = tf.keras.layers.Dropout(0.2)(x)
+
+    # base_model = tf.keras.applications.InceptionV3(
+    #     input_shape=(DIM_IMG[1], DIM_IMG[0], 3),
+    #     include_top=False,
+    #     pooling="avg",
+    #     weights="imagenet",
+    # )
+
+    # base_model.compile(loss="mse")
+
+    # for layer in base_model.layers:
+    #     layer.trainable = False
+
+    x = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', input_shape=(DIM_IMG[1], DIM_IMG[0], 3))(img_input)
+    x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+    x = tf.keras.layers.Conv2D(32, (3, 3), activation='relu')(x)
+    x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+    x = tf.keras.layers.Conv2D(32, (3, 3), activation='relu')(x)
     x = tf.keras.layers.Flatten()(x)
     p_class = tf.keras.layers.Dense(32, activation='softmax', name='p_class')(x)
-    mu = tf.keras.layers.Dense(32, activation='linear', name='mu')(p_class)
-
-    mu_pred = tf.keras.layers.Dot(axes=1)([p_class, mu])
+    mu = tf.keras.layers.Dense(1, activation='linear', name='mu')(p_class)
+    #mu = tf.keras.layers.Dot(axes=1)([p_class, mu])
     ########## Your code ends here ##########
 
-    a_pred = AccelerationLaw(name='a')((mu_pred, th_input))
+    a_pred = AccelerationLaw(name='a')((mu, th_input))
 
     return tf.keras.Model(inputs=[img_input, th_input], outputs=[a_pred])
 
@@ -92,9 +107,26 @@ def build_baseline_model():
 
     ########## Your code starts here ##########
     # TODO: Replace the following with your model from build_model().
-    x = tf.keras.layers.Dense(32, activation='relu')(img_input)
-    x = tf.keras.layers.Dropout(0.2)(x)
-    a_pred = None
+
+    # base_model = tf.keras.applications.InceptionV3(
+    #     input_shape=(DIM_IMG[1], DIM_IMG[0], 3),
+    #     include_top=False,
+    #     pooling="avg",
+    #     weights="imagenet",
+    # )
+
+    # base_model.compile(loss="mse")
+
+    # for layer in base_model.layers:
+    #     layer.trainable = False
+
+    x = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', input_shape=(DIM_IMG[1], DIM_IMG[0], 3))(img_input)
+    x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+    x = tf.keras.layers.Conv2D(32, (3, 3), activation='relu')(x)
+    x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+    x = tf.keras.layers.Conv2D(32, (3, 3), activation='relu')(x)
+    x = tf.keras.layers.Flatten()(x)
+    a_pred = tf.keras.layers.Dense(1, activation='linear')(x)
     ########## Your code ends here ##########
 
     return tf.keras.Model(inputs=[img_input, th_input], outputs=[a_pred])
@@ -105,7 +137,7 @@ def loss(a_actual, a_pred):
     """
 
     ########## Your code starts here ##########
-    l = tf.norm([a_actual - a_pred], ord=2)
+    l = tf.math.sqrt(tf.nn.l2_loss(a_pred - a_actual))
     ########## Your code ends here ##########
 
     return l

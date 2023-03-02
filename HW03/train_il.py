@@ -17,13 +17,13 @@ class NN(tf.keras.Model):
         #         - tf.keras.initializers.GlorotUniform (this is what we tried)
         #         - tf.keras.initializers.GlorotNormal
         #         - tf.keras.initializers.he_uniform or tf.keras.initializers.he_normal
-        initializer = tf.keras.initializers.GlorotUniform()
+        initializer = tf.keras.initializers.GlorotUniform(seed=0)
         self.h0 = tf.keras.layers.Dense(units=in_size, activation='relu', kernel_initializer=initializer)
-        self.h1 = tf.keras.layers.Dense(units=64, activation='relu')
+        self.h1 = tf.keras.layers.Dense(units=64, activation='relu', kernel_initializer=initializer)
         self.h2 = tf.keras.layers.Dropout(0.2)
-        self.h3 = tf.keras.layers.Dense(units=32, activation='relu')
+        self.h3 = tf.keras.layers.Dense(units=32, activation='relu', kernel_initializer=initializer)
         self.h4 = tf.keras.layers.Dropout(0.2)
-        self.h5 = tf.keras.layers.Dense(name='output', units=out_size, activation='linear')     
+        self.h5 = tf.keras.layers.Dense(name='output', units=out_size, activation='sigmoid', kernel_initializer=initializer)     
         ########## Your code ends here ##########
 
     def call(self, x):
@@ -50,7 +50,7 @@ def loss(y_est, y):
     # - y is the actions the expert took for the corresponding batch of observations
     # At the end your code should return the scalar loss value.
     # HINT: Remember, you can penalize steering (0th dimension) and throttle (1st dimension) unequally
-    pen_steering = 0.9
+    pen_steering = 1.0
     pen_throttle = 1.2
     l = tf.math.sqrt(tf.nn.l2_loss(pen_steering * (y_est[0] - y[0]) + pen_throttle * (y_est[1] - y[1])))
 

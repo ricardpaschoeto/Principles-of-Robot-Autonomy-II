@@ -19,11 +19,15 @@ class NN(tf.keras.Model):
         #         - tf.keras.initializers.he_uniform or tf.keras.initializers.he_normal
         initializer = tf.keras.initializers.GlorotUniform(seed=0)
         self.h0 = tf.keras.layers.Dense(units=in_size, activation='relu', kernel_initializer=initializer)
-        self.h1 = tf.keras.layers.Dense(units=64, activation='relu', kernel_initializer=initializer)
+        self.h1 = tf.keras.layers.Dense(units=128, activation='relu', kernel_initializer=initializer)
         self.h2 = tf.keras.layers.Dropout(0.2)
-        self.h3 = tf.keras.layers.Dense(units=32, activation='relu', kernel_initializer=initializer)
+        self.h3 = tf.keras.layers.Dense(units=64, activation='relu', kernel_initializer=initializer)
         self.h4 = tf.keras.layers.Dropout(0.2)
-        self.h5 = tf.keras.layers.Dense(name='output', units=out_size, activation='sigmoid', kernel_initializer=initializer)     
+        self.h5 = tf.keras.layers.Dense(units=32, activation='relu', kernel_initializer=initializer)
+        self.h6 = tf.keras.layers.Dropout(0.2)
+        self.h7 = tf.keras.layers.Dense(units=32, activation='relu', kernel_initializer=initializer)
+        self.h8 = tf.keras.layers.Dropout(0.2)
+        self.h9 = tf.keras.layers.Dense(name='output', units=out_size, activation='linear', kernel_initializer=initializer)     
         ########## Your code ends here ##########
 
     def call(self, x):
@@ -36,7 +40,11 @@ class NN(tf.keras.Model):
         x_ = self.h2(x_)
         x_ = self.h3(x_)
         x_ = self.h4(x_)
-        action_pred = self.h5(x_)
+        x_ = self.h5(x_)
+        x_ = self.h6(x_)
+        x_ = self.h7(x_)
+        x_ = self.h8(x_)
+        action_pred = self.h9(x_)
 
         return action_pred
         ########## Your code ends here ##########
@@ -50,9 +58,10 @@ def loss(y_est, y):
     # - y is the actions the expert took for the corresponding batch of observations
     # At the end your code should return the scalar loss value.
     # HINT: Remember, you can penalize steering (0th dimension) and throttle (1st dimension) unequally
-    pen_steering = 1.0
-    pen_throttle = 1.2
-    l = tf.math.sqrt(tf.nn.l2_loss(pen_steering * (y_est[0] - y[0]) + pen_throttle * (y_est[1] - y[1])))
+    weight_left = tf.convert_to_tensor([tf.linalg.diag([1.0, 1.0])])
+    weight_straight = tf.convert_to_tensor([tf.linalg.diag([0.8, 1.0])])
+    err =  (y - y_est)
+    l = tf.math.sqrt(tf.nn.l2_loss(tf.matmul(weight_straight, err, transpose_b=True)))
 
     return l
     ########## Your code ends here ##########
@@ -84,12 +93,11 @@ def nn(data, args):
         # 3. Based on the loss calculate the gradient for all weights
         # 4. Run an optimization step on the weights.
         # Helpful Functions: tf.GradientTape(), tf.GradientTape.gradient(), tf.keras.Optimizer.apply_gradients
-        #nn_model.optimizer = optimizer
         with tf.GradientTape() as tape:
             y_est = nn_model(x)
             current_loss = loss(y_est, y)
         grads = tape.gradient(current_loss, nn_model.trainable_variables)
-        tf.keras.optimizers.Optimizer.apply_gradients(optimizer, zip(grads, nn_model.trainable_variables))
+        optimizer.apply_gradients(zip(grads, nn_model.trainable_variables))
         ########## Your code ends here ##########
 
         train_loss(current_loss)

@@ -1,0 +1,12 @@
+python train_il.py --scenario intersection --goal left --epochs 100 --lr 0.0003
+python test_il.py --scenario intersection --goal left --visualize
+
+python train_il.py --scenario intersection --goal straight --epochs 500 --lr 0.0003
+python test_il.py --scenario intersection --goal straight --visualize
+
+python train_il.py --scenario intersection --goal right --epochs 500 --lr 0.0003
+python test_il.py --scenario intersection --goal right --visualize
+
+python train_il.py --scenario intersection --goal all --epochs 1000 --lr 0.0003
+======================================================
+python train_ildist.py --scenario intersection --goal left --epochs 100 --lr 0.01

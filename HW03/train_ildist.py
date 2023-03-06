@@ -90,14 +90,13 @@ def loss(y_est, y):
     cov_est = y_est[:,4]
     alpha_est = y_est[:,5:]
 
-    cov_m = [[[var[0], cov], [cov, var[1]]]  for var, cov in zip(var_est, cov_est)]     
-        
+    cov_m = [[[var[0], cov], [cov, var[1]]]  for var, cov in zip(var_est, cov_est)]
     mvn = tfd.MultivariateNormalTriL(loc=mu_est, scale_tril=tf.linalg.cholesky(cov_m))
 
-    out = tf.matmul(alpha_est, mvn)
-    out = tf.reduce_sum(out, 1, keepdims=True)
-    out = -tf.math.log(out + 1e-10)
-    l = tf.reduce_mean(out)
+    out = tf.matmul(alpha_est, mvn.prob(y))
+    out = tf.math.log(out + 1e-10)
+    out = tf.reduce_sum(out, 1, keepdims=True)    
+    l = -tf.reduce_mean(out)
 
     return l
     ########## Your code ends here ##########

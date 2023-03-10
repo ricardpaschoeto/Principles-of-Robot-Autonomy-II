@@ -17,17 +17,13 @@ class NN(tf.keras.Model):
         #         - tf.keras.initializers.GlorotUniform (this is what we tried)
         #         - tf.keras.initializers.GlorotNormal
         #         - tf.keras.initializers.he_uniform or tf.keras.initializers.he_normal
+        hidden_1_unit = 64
         initializer = tf.keras.initializers.GlorotUniform(seed=0)
-        self.h0 = tf.keras.layers.Dense(units=in_size, activation='relu', kernel_initializer=initializer)
-        self.h1 = tf.keras.layers.Dense(units=128, activation='relu', kernel_initializer=initializer)
-        self.h2 = tf.keras.layers.Dropout(0.2)
-        self.h3 = tf.keras.layers.Dense(units=64, activation='relu', kernel_initializer=initializer)
-        self.h4 = tf.keras.layers.Dropout(0.2)
-        self.h5 = tf.keras.layers.Dense(units=32, activation='relu', kernel_initializer=initializer)
-        self.h6 = tf.keras.layers.Dropout(0.2)
-        self.h7 = tf.keras.layers.Dense(units=32, activation='relu', kernel_initializer=initializer)
-        self.h8 = tf.keras.layers.Dropout(0.2)
-        self.h9 = tf.keras.layers.Dense(name='output', units=out_size, activation='linear', kernel_initializer=initializer)     
+
+        self.layer1_w = tf.Variable(initializer(shape=(in_size, hidden_1_unit)))
+        self.layer1_bias = tf.Variable(tf.zeros([hidden_1_unit]))
+        self.layer2_w = tf.Variable(initializer(shape=(hidden_1_unit, out_size)))
+        self.layer2_bias = tf.Variable(tf.zeros([out_size,]))
         ########## Your code ends here ##########
 
     def call(self, x):
@@ -35,16 +31,8 @@ class NN(tf.keras.Model):
         ######### Your code starts here #########
         # We want to perform a forward-pass of the network. Using the weights and biases, this function should give the network output for x where:
         # x is a (?,|O|) tensor that keeps a batch of observations
-        x_ = self.h0(x)
-        x_ = self.h1(x_)
-        x_ = self.h2(x_)
-        x_ = self.h3(x_)
-        x_ = self.h4(x_)
-        x_ = self.h5(x_)
-        x_ = self.h6(x_)
-        x_ = self.h7(x_)
-        x_ = self.h8(x_)
-        action_pred = self.h9(x_)
+        hidden1_out = tf.nn.tanh(tf.add(tf.matmul(x, self.layer1_w), self.layer1_bias))
+        action_pred = tf.add(tf.matmul(hidden1_out, self.layer2_w), self.layer2_bias)
 
         return action_pred
         ########## Your code ends here ##########
@@ -58,10 +46,14 @@ def loss(y_est, y):
     # - y is the actions the expert took for the corresponding batch of observations
     # At the end your code should return the scalar loss value.
     # HINT: Remember, you can penalize steering (0th dimension) and throttle (1st dimension) unequally
-    weight_left = tf.convert_to_tensor([tf.linalg.diag([1.0, 1.0])])
-    weight_straight = tf.convert_to_tensor([tf.linalg.diag([0.8, 1.0])])
-    err =  (y - y_est)
-    l = tf.math.sqrt(tf.nn.l2_loss(tf.matmul(weight_straight, err, transpose_b=True)))
+
+    weight_1 = 1.0
+    weight_2 = 1.0
+
+    l_steering = tf.math.sqrt(tf.nn.l2_loss((y_est[:, 0] - y[:, 0]))) * weight_1
+    l_throttle = tf.math.sqrt(tf.nn.l2_loss((y_est[:, 1] - y[:, 1]))) * weight_2
+
+    l = l_steering + l_throttle
 
     return l
     ########## Your code ends here ##########

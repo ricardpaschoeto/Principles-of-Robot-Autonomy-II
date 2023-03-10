@@ -11,7 +11,8 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args":["--scenario", "intersection", "--goal", "left", "--epochs", "100", "--lr", "0.01"]
+            //"args":["--scenario", "intersection", "--epochs", "100", "--lr", "0.01"]
+            "args":["--scenario", "intersection", "--goal", "left", "--epochs", "100", "--lr", "0.01"] // train_il.py and train_ildist.py
         }
     ]
 }

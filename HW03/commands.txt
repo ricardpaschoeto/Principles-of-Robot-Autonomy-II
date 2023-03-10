@@ -9,4 +9,21 @@ python test_il.py --scenario intersection --goal right --visualize
 
 python train_il.py --scenario intersection --goal all --epochs 1000 --lr 0.0003
 ======================================================
-python train_ildist.py --scenario intersection --goal left --epochs 100 --lr 0.01
+python train_ildist.py --scenario intersection --goal left --epochs 5 --lr 0.01
+python train_ildist.py --scenario intersection --goal right --epochs 100 --lr 0.003
+
+======================================================
+python train_coil.py --scenario intersection --epochs 1000 --lr 0.0003
+
+
+
+    parcels = []
+    for mu, var, alpha, y_true in zip(mu_est, var_est, alpha_est, y):
+        scale =  tf.linalg.cholesky(tf.linalg.diag(var))
+        P = tfd.MultivariateNormalTriL(loc=mu, scale_tril= scale).prob(y_true)
+        out = tf.multiply(alpha, P)
+        out = tf.math.log(out + 1e-10)
+        parcels.append(tf.convert_to_tensor(out))
+
+    sums = tf.reduce_sum(parcels, 1, keepdims=True)
+    l = -tf.reduce_mean(sums)
